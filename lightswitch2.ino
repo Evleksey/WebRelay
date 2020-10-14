@@ -1,8 +1,8 @@
 #include <ESP8266WiFi.h>
 #include <DHT.h>
  
-#define DHTPIN 1                               // Sensor pin
-#define relPin = 0;                            // Relay pin (if using relay module for esp-01 it's always 0) 
+#define DHTPIN 1                              // Sensor pin
+#define relPin 0                            // Relay pin (if using relay module for esp-01 it's always 0) 
 #define DHTTYPE DHT22                          // Sensor used: DHT 22 (AM2302), AM2321
 DHT dht(DHTPIN, DHTTYPE);                      // Initialazing
  
@@ -93,7 +93,7 @@ String HtmlPage(String string, float t, float h)
             "<META NAME='viewport' CONTENT='width=device-width, initial-scale=1'>" +
             "</HEAD>" +
             "<BODY>" +
-            "<H2 style=\"padding: 3px 25px\">Ceiling light</H2>" +
+            "<H2 style=\"padding: 3px 25px\">Light</H2>" +
             string  +
             "<p style=\"padding: 0px 20px\"><i class=\"fa fa-thermometer-2\" aria-hidden=\"true\"></i> Temperature: " + temp + "C <a href=\"/light\"><i class=\"fa fa-refresh\" style=\"color:black\" aria-hidden=\"true\"></i></a></p>" +
             "<p style=\"padding: 0px 20px\"><i class=\"fa fa-tint\" aria-hidden=\"true\"></i> Humidity: " + hum + "%</p>"+
@@ -139,7 +139,10 @@ void setup() {
   Serial.print(WiFi.localIP());
   Serial.println("/"); 
 
-   dht.begin();
+  dht.begin();
+
+  state = HIGH;
+  digitalWrite(relPin, state); 
 }
 
 void loop()
@@ -150,7 +153,7 @@ void loop()
   // wait for a client (web browser) to connect
   if (client)
   {
-    Serial.println("\n[Client connected]");
+    //Serial.println("\n[Client connected]");
     float h = dht.readHumidity();                
     float t = dht.readTemperature();     
     while (client.connected())
@@ -159,13 +162,13 @@ void loop()
       if (client.available())
       {
         String request = client.readStringUntil('\r');
-        Serial.print(request);
+        //Serial.print(request);
         
         if (request.indexOf("GET /light/toggle") != -1)  
         {
           switching = true;
-          digitalWrite(relPin, state);
           state = !state;
+          digitalWrite(relPin, state);          
         }
 
         
@@ -174,7 +177,7 @@ void loop()
         {
           if(!switching)
           {
-            if(state == LOW)
+            if(state == HIGH)
             {
               client.println(HtmlPage("<a href=\"/light/toggle\"><button class = \"button off\"><i class=\"fa fa-power-off\" aria-hidden=\"true\"></i> Off</button></a>&nbsp;</p>", t, h));
               break;
